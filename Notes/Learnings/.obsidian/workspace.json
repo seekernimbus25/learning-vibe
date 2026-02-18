@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Git.md",
-                "mode": "preview",
+                "file": "Git & Github.md",
+                "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Git"
+              "title": "Git & Github"
             }
           }
         ]
@@ -185,8 +185,9 @@
   },
   "active": "d70eb67892ff0b17",
   "lastOpenFiles": [
-    "Untitled.base",
     "Git.md",
+    "Git & Github.md",
+    "Untitled.base",
     "desktop.ini",
     "Welcome.md"
   ]
