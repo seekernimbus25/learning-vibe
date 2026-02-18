@@ -138,6 +138,18 @@
       word-break: break-word;
     }
 
+    .task-item.completed .task-text {
+      text-decoration: line-through;
+      color: #9ca3af;
+    }
+
+    .toggle-complete {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+      accent-color: #4f46e5;
+    }
+
     .task-actions {
       display: flex;
       align-items: center;
@@ -220,7 +232,7 @@
 
   <script>
     (function () {
-      const STORAGE_KEY = "todo_tasks_v1";
+      const STORAGE_KEY = "todo_tasks_v2";
 
       const inputEl = document.getElementById("task-input");
       const addBtn = document.getElementById("add-btn");
@@ -231,8 +243,24 @@
 
       function loadTasks() {
         try {
-          const raw = localStorage.getItem(STORAGE_KEY);
-          tasks = raw ? JSON.parse(raw) : [];
+          const rawV2 = localStorage.getItem(STORAGE_KEY);
+          if (rawV2) {
+            const parsed = JSON.parse(rawV2);
+            tasks = Array.isArray(parsed) ? parsed : [];
+          } else {
+            // Backwards compatibility with older string-only storage
+            const rawV1 = localStorage.getItem("todo_tasks_v1");
+            if (rawV1) {
+              const old = JSON.parse(rawV1);
+              tasks = Array.isArray(old)
+                ? old.map((t) =>
+                    typeof t === "string" ? { text: t, completed: false } : t
+                  )
+                : [];
+            } else {
+              tasks = [];
+            }
+          }
         } catch (e) {
           console.error("Failed to load tasks from localStorage:", e);
           tasks = [];
@@ -258,10 +286,18 @@
       function createTaskElement(task, index) {
         const li = document.createElement("li");
         li.className = "task-item";
+        if (task.completed) {
+          li.classList.add("completed");
+        }
+
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.className = "toggle-complete";
+        checkbox.checked = !!task.completed;
 
         const span = document.createElement("span");
         span.className = "task-text";
-        span.textContent = task;
+        span.textContent = task.text;
 
         const actions = document.createElement("div");
         actions.className = "task-actions";
@@ -270,12 +306,26 @@
         deleteBtn.className = "delete-btn";
         deleteBtn.textContent = "Delete";
 
+        checkbox.addEventListener("change", () => {
+          tasks[index].completed = checkbox.checked;
+          saveTasks();
+          renderTasks();
+        });
+
+        span.addEventListener("click", () => {
+          checkbox.checked = !checkbox.checked;
+          tasks[index].completed = checkbox.checked;
+          saveTasks();
+          renderTasks();
+        });
+
         deleteBtn.addEventListener("click", () => {
           tasks.splice(index, 1);
           saveTasks();
           renderTasks();
         });
 
+        li.appendChild(checkbox);
         actions.appendChild(deleteBtn);
         li.appendChild(span);
         li.appendChild(actions);
@@ -294,7 +344,7 @@
       function addTask() {
         const text = inputEl.value.trim();
         if (!text) return;
-        tasks.push(text);
+        tasks.push({ text, completed: false });
         inputEl.value = "";
         saveTasks();
         renderTasks();
